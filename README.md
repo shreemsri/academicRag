@@ -1,113 +1,231 @@
-# 🎓 ScholarRAG: Academic Retrieval-Augmented Generation
+# 🎓 ScholarRAG
 
-**ScholarRAG** is a highly-optimized, local-first hybrid Retrieval-Augmented Generation (RAG) system engineered for academic and professional document analysis. It allows users to upload complex documents (PDFs, PPTXs, TXTs) and instantly query them. By leveraging dense and sparse hybrid search, cross-encoder reranking, and the lightning-fast **Gemini 3.5 Flash** model, ScholarRAG produces accurate, context-aware answers accompanied by verifiably accurate **page-level citations**.
+### Academic Retrieval-Augmented Generation for Intelligent Document Research
+
+**ScholarRAG** is a local-first hybrid RAG platform designed to parse, index, and analyze academic papers, technical documentation, and professional reports with verifiable page-level citations.
 
 ---
 
 ## ✨ Key Features
 
-- 🧠 **Hybrid Retrieval Engine**: Fuses Dense Vector Search (ChromaDB + BAAI/bge-small-en-v1.5) with Sparse Lexical Search (BM25Okapi) using Reciprocal Rank Fusion (RRF) for unparalleled search recall.
-- 🎯 **Cross-Encoder Reranking**: Utilizes `BAAI/bge-reranker-base` to strictly score and re-order the retrieved chunks, ensuring that the LLM only sees the most relevant text.
-- 💬 **Real-time Streaming**: Streams generative responses instantly to the client via Server-Sent Events (SSE).
-- 📑 **Page-Level Citations**: Answers are backed by source document citations, mapping directly to the exact chunk and page number.
-- ⚡ **Gemini 3.5 Flash Integration**: Built-in, natively configured support for Google's newest and fastest generative models.
-- 🎨 **Glassmorphism UI**: A stunning, highly responsive React frontend featuring dynamic theming and seamless micro-animations.
+* **🧠 Hybrid Retrieval** — Combines dense vector search (`BGE Embeddings`) and sparse lexical search (`BM25`).
+* **🔀 RRF Fusion** — Merges semantic and lexical retrieval results seamlessly.
+* **🎯 Cross-Encoder Reranking** — Uses `BAAI/bge-reranker-base` to select the most relevant evidence chunks.
+* **🤖 Gemini Generation** — Synthesizes accurate answers using retrieved document context via Google Gemini.
+* **📑 Page-Level Citations** — Links answers directly back to specific document pages and chunk IDs.
+* **⚡ Real-Time Streaming** — Uses Server-Sent Events (SSE) for instant, token-by-token response streaming.
+* **🎨 Modern UI** — Built with React, TypeScript, Vite, TailwindCSS, Radix UI, and Lucide icons.
+* **💾 Local-First Processing** — Parsing, embedding, indexing, and reranking run locally for data privacy.
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    A[User Question] --> B1[Dense Search <br/> BGE Embeddings]
+    A --> B2[BM25 Search <br/> Lexical Retrieval]
+    B1 --> C[RRF Fusion]
+    B2 --> C
+    C --> D[Cross-Encoder Reranker]
+    D --> E[Top-K Evidence Selection]
+    E --> F[Google Gemini LLM]
+    F --> G[SSE Streaming Response]
+    G --> H[Answer + Page-Level Citations]
+
+```
+
+### Document Ingestion Flow
+
+> **Upload** ➔ **Parse** ➔ **Chunk** ➔ **Embed** ➔ **ChromaDB + BM25**
+> *Every chunk retains metadata (document name, page number, chunk ID) ensuring traceability throughout retrieval and generation.*
 
 ---
 
 ## 🛠️ Technology Stack
 
-### **Backend (FastAPI)**
-- **Framework**: Python 3.12, FastAPI, Uvicorn
-- **AI Models**: 
-  - Embedding: `BAAI/bge-small-en-v1.5`
-  - Reranker: `BAAI/bge-reranker-base`
-  - Generation: Google Gemini (`gemini-3.5-flash`)
-- **Database & Storage**: SQLite (SQLModel), ChromaDB
-- **Document Processing**: PyMuPDF (`fitz`), `python-pptx`, LangChain Text Splitters
+### Backend
 
-### **Frontend (React)**
-- **Framework**: React 18, Vite, TypeScript
-- **Styling**: TailwindCSS, Radix UI, Lucide Icons
-- **State Management**: Zustand
-- **Network**: Native `fetch` with Server-Sent Events (SSE) streaming.
+| Component | Technology |
+| --- | --- |
+| **API Framework** | FastAPI + Uvicorn |
+| **Database & ORM** | SQLite + SQLModel |
+| **Vector Store** | ChromaDB |
+| **Embeddings** | `BAAI/bge-small-en-v1.5` |
+| **Sparse Search** | BM25Okapi |
+| **Reranker** | `BAAI/bge-reranker-base` |
+| **LLM Generation** | Google Gemini |
+| **Document Parsers** | PyMuPDF (PDF), python-pptx (PPTX) |
+| **Chunking** | LangChain Text Splitters |
+
+### Frontend
+
+| Component | Technology |
+| --- | --- |
+| **Framework** | React 18 |
+| **Language** | TypeScript |
+| **Build Tool** | Vite |
+| **Styling** | TailwindCSS |
+| **UI Library** | Radix UI + Lucide Icons |
+| **State Management** | Zustand |
+| **Streaming** | Server-Sent Events (SSE) |
 
 ---
 
-## 🏗️ Architecture Flow
+## 📂 Supported Documents
 
-1. **Ingestion**: Documents are parsed, split into semantically coherent chunks, embedded via `bge-small`, and indexed into ChromaDB (dense) and BM25 (sparse).
-2. **Retrieval**: A user query retrieves top chunks from both indexes. The results are mathematically fused (RRF).
-3. **Reranking**: The `bge-reranker-base` cross-encoder compares the user query against the top fused chunks to output a precise relevance score, discarding irrelevant data.
-4. **Generation**: The absolute best chunks are injected into a strict system prompt and streamed through `gemini-3.5-flash`.
-5. **Consumption**: The frontend listens to the SSE stream, rendering tokens instantly alongside dynamic citation cards.
+* **PDF** (`.pdf`)
+* **PPTX** (`.pptx`)
+* **TXT** (`.txt`)
+
+*Future support roadmap includes DOCX, Markdown, scanned PDFs via OCR, tables, figures, and extraction tools.*
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- **Python**: 3.11 or 3.12
-- **Node.js**: 18+ and `npm`
-- **Gemini API Key**: Obtainable from Google AI Studio.
+### Prerequisites
 
-### 2. Clone the Repository
+* Python 3.11 or 3.12
+* Node.js 18+ and npm
+* A valid Google Gemini API Key
+
+### 1. Clone Repository
+
 ```bash
 git clone https://github.com/shreemsri/academicRag.git
 cd academicRag
+
 ```
 
-### 3. Backend Setup
-Navigate to the root directory and create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### 2. Configure Environment Variables
 
-Install the required Python dependencies:
-```bash
-pip install -r backend/requirements.txt
-```
-
-**Environment Variables:**
 Create a `.env` file in the root directory:
+
 ```env
 DEFAULT_LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key_here
+
 ```
 
-Start the FastAPI server (runs on `http://localhost:8001`):
+### 3. Setup Backend
+
 ```bash
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8001
-```
-*(Note: On first boot, the system will download the embedding and reranker models from HuggingFace. This may take a few minutes depending on your internet connection.)*
+python -m venv venv
 
-### 4. Frontend Setup
-Open a new terminal window and navigate to the frontend directory:
+# Windows
+venv\Scripts\activate
+
+# Linux/macOS
+source venv/bin/activate
+
+pip install -r backend/requirements.txt
+
+# Start FastAPI server
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8001
+
+```
+
+> *Backend runs at **http://localhost:8001***
+
+### 4. Setup Frontend
+
+Open a separate terminal window:
+
 ```bash
 cd frontend
 npm install
+npm run dev
+
 ```
 
-Start the Vite development server:
-```bash
-npm run dev
-```
-Navigate to `http://localhost:5174` in your browser to access the application.
+> *Open the local Vite URL shown in the terminal, typically **http://localhost:5174***
+> *(Note: On first startup, Hugging Face embedding and reranking models will be downloaded automatically).*
 
 ---
 
 ## 🧪 Testing
 
-The repository includes automated testing scripts for the core logic:
-- `test_upload.py`: Tests the ingestion pipeline (PDF parsing, chunking, and embedding).
-- `test_qa.py`: Tests the retrieval engine and Gemini LLM streaming integration directly from the terminal.
+Test document ingestion pipeline:
 
-Run them via:
 ```bash
-source venv/bin/activate
+python test_upload.py
+
+```
+
+Test retrieval and QA pipeline:
+
+```bash
 python test_qa.py
+
 ```
 
 ---
-*Built for the future of academic research.*
+
+## 📁 Project Structure
+
+```text
+academicRag/
+├── backend/
+│   ├── app/
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   └── package.json
+├── tests/
+├── test_upload.py
+├── test_qa.py
+├── .env
+└── README.md
+
+```
+
+---
+
+## 🎯 Example Questions
+
+After uploading a research paper or document, you can ask:
+
+* What problem does this paper address?
+* What methodology was used?
+* What datasets were used?
+* What are the major limitations?
+* Summarize the experimental results.
+* Which page discusses the evaluation methodology?
+
+---
+
+## 🔐 Reliability & Security
+
+ScholarRAG reduces unsupported answers through a rigorous multi-stage pipeline:
+
+
+$$\text{Hybrid Retrieval} \longrightarrow \text{RRF Fusion} \longrightarrow \text{Reranking} \longrightarrow \text{Evidence Selection} \longrightarrow \text{Grounded Generation} \longrightarrow \text{Source Citation}$$
+
+> *Note: RAG does not guarantee zero hallucinations; always verify citations against the original document.*
+
+For production deployments, be sure to configure robust authentication, file size/type validation, rate limiting, secure secret management, CORS configuration, and upload isolation.
+
+---
+
+## 🔮 Future Roadmap
+
+* [ ] OCR and scanned-PDF support
+* [ ] Table and figure extraction
+* [ ] Multi-document comparison views
+* [ ] Literature review assistance tools
+* [ ] Citation graph visualization
+* [ ] Research-gap detection engine
+* [ ] DOCX and Markdown support
+* [ ] Retrieval and citation evaluation metrics
+* [ ] Collaborative research workspaces
+
+---
+
+## ⭐ Project Summary
+
+ScholarRAG combines dense retrieval, sparse BM25 search, RRF fusion, cross-encoder reranking, Gemini generation, SSE streaming, and page-level citations into a single academic research assistant.
+
+Turn your documents into an interactive, searchable, evidence-grounded research knowledge base.
+
+---
