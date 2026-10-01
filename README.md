@@ -1,113 +1,182 @@
-# 🎓 ScholarRAG: Academic Retrieval-Augmented Generation
+<div align="center">
+  <h1>🎓 ScholarRAG</h1>
+  <p><em>Advanced Hybrid Retrieval-Augmented Generation with Verifiable Citations</em></p>
 
-**ScholarRAG** is a highly-optimized, local-first hybrid Retrieval-Augmented Generation (RAG) system engineered for academic and professional document analysis. It allows users to upload complex documents (PDFs, PPTXs, TXTs) and instantly query them. By leveraging dense and sparse hybrid search, cross-encoder reranking, and the lightning-fast **Gemini 3.5 Flash** model, ScholarRAG produces accurate, context-aware answers accompanied by verifiably accurate **page-level citations**.
-
----
-
-## ✨ Key Features
-
-- 🧠 **Hybrid Retrieval Engine**: Fuses Dense Vector Search (ChromaDB + BAAI/bge-small-en-v1.5) with Sparse Lexical Search (BM25Okapi) using Reciprocal Rank Fusion (RRF) for unparalleled search recall.
-- 🎯 **Cross-Encoder Reranking**: Utilizes `BAAI/bge-reranker-base` to strictly score and re-order the retrieved chunks, ensuring that the LLM only sees the most relevant text.
-- 💬 **Real-time Streaming**: Streams generative responses instantly to the client via Server-Sent Events (SSE).
-- 📑 **Page-Level Citations**: Answers are backed by source document citations, mapping directly to the exact chunk and page number.
-- ⚡ **Gemini 3.5 Flash Integration**: Built-in, natively configured support for Google's newest and fastest generative models.
-- 🎨 **Glassmorphism UI**: A stunning, highly responsive React frontend featuring dynamic theming and seamless micro-animations.
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.12-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/ChromaDB-FF4F00?style=for-the-badge" alt="ChromaDB" />
+    <img src="https://img.shields.io/badge/Gemini-3.5_Flash-8E75B2?style=for-the-badge&logo=google" alt="Gemini" />
+  </p>
+</div>
 
 ---
 
-## 🛠️ Technology Stack
+## 📖 Executive Summary
 
-### **Backend (FastAPI)**
-- **Framework**: Python 3.12, FastAPI, Uvicorn
-- **AI Models**: 
-  - Embedding: `BAAI/bge-small-en-v1.5`
-  - Reranker: `BAAI/bge-reranker-base`
-  - Generation: Google Gemini (`gemini-3.5-flash`)
-- **Database & Storage**: SQLite (SQLModel), ChromaDB
-- **Document Processing**: PyMuPDF (`fitz`), `python-pptx`, LangChain Text Splitters
+**ScholarRAG** solves the inherent hallucination problem in Large Language Models by grounding generative responses entirely within your specific documents. Engineered for academics, legal professionals, and data-heavy researchers, it provides a seamless interface to upload complex documents and query them instantly.
 
-### **Frontend (React)**
-- **Framework**: React 18, Vite, TypeScript
-- **Styling**: TailwindCSS, Radix UI, Lucide Icons
-- **State Management**: Zustand
-- **Network**: Native `fetch` with Server-Sent Events (SSE) streaming.
+Unlike standard RAG pipelines, ScholarRAG employs a **Hybrid Retrieval Strategy** backed by a **Cross-Encoder Reranker**, ensuring that the LLM is fed only the absolute highest-fidelity context. Every generated claim is mapped back to the source material with **verifiable page-level citations**.
 
 ---
 
-## 🏗️ Architecture Flow
+## ✨ Core Features & Visual Breakdown
 
-1. **Ingestion**: Documents are parsed, split into semantically coherent chunks, embedded via `bge-small`, and indexed into ChromaDB (dense) and BM25 (sparse).
-2. **Retrieval**: A user query retrieves top chunks from both indexes. The results are mathematically fused (RRF).
-3. **Reranking**: The `bge-reranker-base` cross-encoder compares the user query against the top fused chunks to output a precise relevance score, discarding irrelevant data.
-4. **Generation**: The absolute best chunks are injected into a strict system prompt and streamed through `gemini-3.5-flash`.
-5. **Consumption**: The frontend listens to the SSE stream, rendering tokens instantly alongside dynamic citation cards.
+| Feature | Description | Technical Implementation |
+| :--- | :--- | :--- |
+| 🧠 **Hybrid Search** | Fuses meaning and exact keywords. | `ChromaDB` (Dense) + `BM25Okapi` (Sparse) via Reciprocal Rank Fusion (RRF). |
+| 🎯 **Cross-Encoder** | Strict relevance filtering. | `BAAI/bge-reranker-base` dynamically re-orders results before LLM generation. |
+| 📑 **Smart Chunking** | Preserves document hierarchy. | Custom **heading-aware parent-child recursive chunker** preserving logical boundaries. |
+| 💬 **SSE Streaming** | Real-time AI interactions. | Native `fetch` with FastAPI `StreamingResponse` yielding tokens chunk-by-chunk. |
+| 🎨 **Premium UI** | Stunning glassmorphism design. | React, TailwindCSS, Radix UI primitives, and dynamic animations. |
 
 ---
 
-## 🚀 Getting Started
+## 🏗️ System Architecture Flow
 
-### 1. Prerequisites
-- **Python**: 3.11 or 3.12
-- **Node.js**: 18+ and `npm`
-- **Gemini API Key**: Obtainable from Google AI Studio.
+The pipeline is heavily decoupled, separating the heavy machine learning inference tasks from the instantaneous web rendering tasks.
 
-### 2. Clone the Repository
+```mermaid
+graph TD
+    %% Ingestion Flow
+    subgraph Document Ingestion Pipeline
+        A[📄 Upload Document] -->|PyMuPDF/PPTX| B(Text Extraction & Format Unify)
+        B --> C{Heading-Aware Chunker}
+        C --> D[Dense Embeddings: bge-small-en]
+        C --> E[Sparse Indexing: Tokenization]
+        D --> F[(ChromaDB Vector Store)]
+        E --> G[(BM25 In-Memory Index)]
+    end
+
+    %% Query Flow
+    subgraph Query & Generation Pipeline
+        H[💬 User Query] --> I[Embed Query]
+        I --> J{Hybrid Retrieval}
+        F -.->|Top K Vectors| J
+        G -.->|Top K Keywords| J
+        J --> K[Reciprocal Rank Fusion]
+        K --> L[Cross-Encoder Reranker]
+        L -->|Top 3-5 Chunks| M(Prompt Assembly)
+        M --> N[Gemini 3.5 Flash LLM]
+        N -->|SSE Stream| O[🖥️ React UI rendering tokens & citations]
+    end
+```
+
+---
+
+## 🔬 Under the Hood: AI Models
+
+ScholarRAG doesn't rely entirely on cloud APIs. It runs critical, privacy-centric models entirely on your local hardware for ingestion and retrieval:
+
+1. **Embedding Layer (`BAAI/bge-small-en-v1.5`)**: 
+   - A highly efficient, 384-dimensional dense model that requires < 500MB of RAM. Exceptional at grasping semantic relationships in English academic text.
+2. **Reranking Layer (`BAAI/bge-reranker-base`)**: 
+   - A Cross-Encoder. Instead of comparing two isolated vectors, it feeds the user query and the retrieved chunk through attention layers *simultaneously*, outputting a highly accurate 0.0–1.0 relevance score.
+3. **Generative Layer (`gemini-3.5-flash`)**: 
+   - Google's blazing-fast generative model, restricted by a rigid system prompt to only answer using provided context.
+
+---
+
+## 🛠️ Setup & Installation Guide
+
+### Prerequisites
+- **Python 3.11+**
+- **Node.js 18+**
+- **Google Gemini API Key** ([Get it here](https://aistudio.google.com/))
+
+### 1. Backend Initialization (FastAPI)
+
+Clone the repository and set up your Python environment:
+
 ```bash
 git clone https://github.com/shreemsri/academicRag.git
 cd academicRag
-```
 
-### 3. Backend Setup
-Navigate to the root directory and create a virtual environment:
-```bash
+# Create and activate virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-Install the required Python dependencies:
-```bash
+# Install dependencies
 pip install -r backend/requirements.txt
 ```
 
-**Environment Variables:**
-Create a `.env` file in the root directory:
-```env
+Create your `.env` configuration file in the project root:
+
+```ini
+# .env
 DEFAULT_LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=your_secure_api_key_here
 ```
 
-Start the FastAPI server (runs on `http://localhost:8001`):
+Boot the server:
 ```bash
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8001
 ```
-*(Note: On first boot, the system will download the embedding and reranker models from HuggingFace. This may take a few minutes depending on your internet connection.)*
+*(Note: Initial startup will dynamically download the BAAI models from HuggingFace to your local cache).*
 
-### 4. Frontend Setup
-Open a new terminal window and navigate to the frontend directory:
+### 2. Frontend Initialization (React)
+
+Open a secondary terminal:
+
 ```bash
 cd frontend
 npm install
-```
-
-Start the Vite development server:
-```bash
 npm run dev
 ```
-Navigate to `http://localhost:5174` in your browser to access the application.
+Navigate to `http://localhost:5174` in your browser. You are now ready to upload and query!
 
 ---
 
-## 🧪 Testing
+## 📁 Repository Structure
 
-The repository includes automated testing scripts for the core logic:
-- `test_upload.py`: Tests the ingestion pipeline (PDF parsing, chunking, and embedding).
-- `test_qa.py`: Tests the retrieval engine and Gemini LLM streaming integration directly from the terminal.
+<details>
+<summary>Click to expand the full directory tree</summary>
 
-Run them via:
+```text
+ScholarRAG/
+├── backend/                  
+│   ├── app/
+│   │   ├── api/              # FastAPI Router endpoints
+│   │   ├── core/             # Auth, Settings, Logging
+│   │   ├── database/         # SQLite DB schemas and ChromaDB initialization
+│   │   ├── ingestion/        # Document Parsing, Heading-Aware Chunkers
+│   │   ├── retrieval/        # Dense (Vector) and Sparse (BM25) engines
+│   │   ├── generation/       # Streaming LLM Interface (Gemini, OpenAI, Ollama)
+│   │   └── main.py           # Application Entrypoint
+│   └── requirements.txt      
+│
+├── frontend/                 
+│   ├── src/
+│   │   ├── components/       # Radix UI and custom glassmorphism components
+│   │   ├── lib/              # Zustand stores, SSE fetch utilities
+│   │   ├── App.tsx           
+│   │   └── main.tsx          
+│   ├── package.json          
+│   └── tailwind.config.js    
+│
+├── .env                      # Secret Keys
+├── documentation.md          # PDF Generator source
+└── ScholarRAG_Documentation.pdf
+```
+</details>
+
+---
+
+## 🧪 Automated Testing
+
+ScholarRAG ships with rigorous testing scripts to validate the pipeline:
+
+- **`test_upload.py`**: Simulates the ingestion flow. Validates text extraction, chunking math, and ChromaDB vector commits.
+- **`test_qa.py`**: Exercises the retrieval mechanisms (RRF math, cross-encoder scores) and verifies the SSE stream structure from Gemini.
+
+Execute them directly:
 ```bash
 source venv/bin/activate
 python test_qa.py
 ```
 
 ---
-*Built for the future of academic research.*
+<div align="center">
+  <p>Built for the future of academic research. 🚀</p>
+</div>
