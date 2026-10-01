@@ -25,11 +25,11 @@ Unlike standard RAG pipelines, ScholarRAG employs a **Hybrid Retrieval Strategy*
 
 | Feature | Description | Technical Implementation |
 | :--- | :--- | :--- |
-| 🧠 **Hybrid Search** | Fuses meaning and exact keywords. | `ChromaDB` (Dense) + `BM25Okapi` (Sparse) via Reciprocal Rank Fusion (RRF). |
-| 🎯 **Cross-Encoder** | Strict relevance filtering. | `BAAI/bge-reranker-base` dynamically re-orders results before LLM generation. |
-| 📑 **Smart Chunking** | Preserves document hierarchy. | Custom **heading-aware parent-child recursive chunker** preserving logical boundaries. |
-| 💬 **SSE Streaming** | Real-time AI interactions. | Native `fetch` with FastAPI `StreamingResponse` yielding tokens chunk-by-chunk. |
-| 🎨 **Premium UI** | Stunning glassmorphism design. | React, TailwindCSS, Radix UI primitives, and dynamic animations. |
+|  **Hybrid Search** | Fuses meaning and exact keywords. | `ChromaDB` (Dense) + `BM25Okapi` (Sparse) via Reciprocal Rank Fusion (RRF). |
+|  **Cross-Encoder** | Strict relevance filtering. | `BAAI/bge-reranker-base` dynamically re-orders results before LLM generation. |
+|  **Smart Chunking** | Preserves document hierarchy. | Custom **heading-aware parent-child recursive chunker** preserving logical boundaries. |
+|  **SSE Streaming** | Real-time AI interactions. | Native `fetch` with FastAPI `StreamingResponse` yielding tokens chunk-by-chunk. |
+|  **Premium UI** | Stunning glassmorphism design. | React, TailwindCSS, Radix UI primitives, and dynamic animations. |
 
 ---
 
